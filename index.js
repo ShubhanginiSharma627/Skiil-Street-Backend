@@ -15,6 +15,25 @@ const basicAuth = (req, res, next) => {
   }
 };
 
+// Validation function
+const validateNote = (title, content) => {
+  const errors = {};
+  if (!title) {
+    errors.title = "Title is required.";
+  } else if (title.length < 3 || title.length > 100) {
+    errors.title = "Title must be between 3 and 100 characters.";
+  }
+
+  if (!content) {
+    errors.content = "Content is required.";
+  } else if (content.length < 10 || content.length > 1000) {
+    errors.content = "Content must be between 10 and 1000 characters.";
+  }
+
+  return errors;
+};
+
+
 dotenv.config();
 
 const app = express();
@@ -42,15 +61,16 @@ app.use((error, req, res, next) => {
 });
 // Create Note Endpoint
 app.post('/notes', async (req, res) => {
-
-  if (!req.body.title || !req.body.content) {
-    return res.status(400).send({ error: 'Title and content are required' });
+  const { title, content } = req.body;
+  const errors = validateNote(title, content);
+  if (Object.keys(errors).length > 0) {
+    return res.status(400).send({ errors });
   }
 
   try {
     const note = new Note({
-      title: req.body.title,
-      content: req.body.content,
+      title,
+      content,
       updatedAt: new Date(),
     });
     await note.save();
@@ -59,6 +79,7 @@ app.post('/notes', async (req, res) => {
     res.status(400).send(error);
   }
 });
+
 
 // Retrieve Notes Endpoint
 app.get('/notes', async (req, res) => {
@@ -83,13 +104,16 @@ app.get('/notes/:id', async (req, res) => {
 
 // Update Note Endpoint
 app.put('/notes/:id', async (req, res) => {
-  if (!req.body.title || !req.body.content) {
-    return res.status(400).send({ error: 'Title and content are required' });
+  const { title, content } = req.body;
+  const errors = validateNote(title, content);
+  if (Object.keys(errors).length > 0) {
+    return res.status(400).send({ errors });
   }
+
   try {
     const note = await Note.findByIdAndUpdate(req.params.id, {
-      title: req.body.title,
-      content: req.body.content,
+      title,
+      content,
       updatedAt: new Date(),
     }, { new: true });
     if (!note) return res.status(404).send('Note not found');
@@ -98,6 +122,7 @@ app.put('/notes/:id', async (req, res) => {
     res.status(400).send(error);
   }
 });
+
 
 // Delete Note Endpoint
 app.delete('/notes/:id', async (req, res) => {
