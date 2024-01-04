@@ -98,7 +98,7 @@ app.get('/notes/:id', async (req, res) => {
     if (!note) return res.status(404).send('Note not found');
     res.send(note);
   } catch (error) {
-    res.status(500).send(error);
+    res.status(404).send(error);
   }
 });
 
@@ -107,7 +107,7 @@ app.put('/notes/:id', async (req, res) => {
   const { title, content } = req.body;
   const errors = validateNote(title, content);
   if (Object.keys(errors).length > 0) {
-    return res.status(400).send({ errors });
+    return res.status(404).send({ errors });
   }
 
   try {
